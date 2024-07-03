@@ -66,7 +66,7 @@ No modules.
 | <a name="input_aws_account_id"></a> [aws\_account\_id](#input\_aws\_account\_id) | The account that the AWS lambda power tuning app is going to be deployed | `string` | n/a | yes |
 | <a name="input_aws_region"></a> [aws\_region](#input\_aws\_region) | The region that the AWS lambda power tuning app is going to be deployed | `string` | n/a | yes |
 | <a name="input_lambda_function_prefix"></a> [lambda\_function\_prefix](#input\_lambda\_function\_prefix) | Prefix used for the names of Lambda functions, Step Functions state machines, IAM roles, and IAM policies. | `string` | `"lambda_power_tuning"` | no |
-| <a name="input_permissions_boundary"></a> [permissions\_boundary](#input\_permissions\_boundary) | ARN of the policy that is used to set the permissions boundary for the role. | `any` | `null` | no |
+| <a name="input_permissions_boundary"></a> [permissions\_boundary](#input\_permissions\_boundary) | ARN of the policy that is used to set the permissions boundary for the role. | `string` | `null` | no |
 | <a name="input_role_path_override"></a> [role\_path\_override](#input\_role\_path\_override) | IAM Role path to use for each Lambda function's role, instead of the default path /lambda\_power\_tuning/ (see variable lambda\_function\_prefix). | `string` | `""` | no |
 | <a name="input_vpc_security_group_ids"></a> [vpc\_security\_group\_ids](#input\_vpc\_security\_group\_ids) | List of security group ids when Lambda Function should run in the VPC. | `list(string)` | `null` | no |
 | <a name="input_vpc_subnet_ids"></a> [vpc\_subnet\_ids](#input\_vpc\_subnet\_ids) | List of subnet ids when Lambda Function should run in the VPC. Usually private or intra subnets. | `list(string)` | `null` | no |

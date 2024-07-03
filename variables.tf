@@ -25,6 +25,7 @@ variable "role_path_override" {
 
 variable "permissions_boundary" {
   default     = null
+  type        = string
   description = "ARN of the policy that is used to set the permissions boundary for the role."
 }
 
