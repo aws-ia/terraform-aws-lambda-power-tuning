@@ -3,9 +3,8 @@
 
 | Name | Version |
 |------|---------|
-| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 0.14.0 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 3.72.0 |
-| <a name="requirement_awscc"></a> [awscc](#requirement\_awscc) | >= 0.11.0 |
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.26 |
 
 ## Providers
 
@@ -13,7 +12,9 @@ No providers.
 
 ## Modules
 
-No modules.
+| Name | Source | Version |
+|------|--------|---------|
+| <a name="module_aws_power_tuning"></a> [aws\_power\_tuning](#module\_aws\_power\_tuning) | github.com/aws-ia/terraform-aws-lambda-power-tuning | n/a |
 
 ## Resources
 
@@ -25,5 +26,11 @@ No inputs.
 
 ## Outputs
 
-No outputs.
+| Name | Description |
+|------|-------------|
+| <a name="output_analyzer_function_arn"></a> [analyzer\_function\_arn](#output\_analyzer\_function\_arn) | Analyzer lambda function ARN |
+| <a name="output_cleaner_function_arn"></a> [cleaner\_function\_arn](#output\_cleaner\_function\_arn) | Cleaner lambda function ARN |
+| <a name="output_executor_function_arn"></a> [executor\_function\_arn](#output\_executor\_function\_arn) | Executor lambda function ARN |
+| <a name="output_initializer_function_arn"></a> [initializer\_function\_arn](#output\_initializer\_function\_arn) | Initializer lambda function ARN |
+| <a name="output_optimizer_function_arn"></a> [optimizer\_function\_arn](#output\_optimizer\_function\_arn) | optimizer lambda function ARN |
 <!-- END_TF_DOCS -->
