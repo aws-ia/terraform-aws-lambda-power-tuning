@@ -8,17 +8,21 @@
 
 ## Providers
 
-No providers.
+| Name | Version |
+|------|---------|
+| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 5.26 |
 
 ## Modules
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_aws_power_tuning"></a> [aws\_power\_tuning](#module\_aws\_power\_tuning) | github.com/aws-ia/terraform-aws-lambda-power-tuning | n/a |
+| <a name="module_aws_power_tuning"></a> [aws\_power\_tuning](#module\_aws\_power\_tuning) | ../../ | n/a |
 
 ## Resources
 
-No resources.
+| Name | Type |
+|------|------|
+| [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
 
 ## Inputs
 

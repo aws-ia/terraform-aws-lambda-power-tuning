@@ -7,14 +7,10 @@
 locals {
   aws_region = "us-west-2"
 }
+data "aws_caller_identity" "current" {}
 
 module "aws_power_tuning" {
-  source  = "github.com/aws-ia/terraform-aws-lambda-power-tuning"
-  aws_account_id = "11223344556677"
+  source  = "../../"
+  aws_account_id = data.aws_caller_identity.current.account_id
   aws_region = local.aws_region
-  lambda_function_prefix = "lambda_power_tuning"
-  role_path_override = ""
-  permissions_boundary = null
-  vpc_subnet_ids = null
-  vpc_security_group_ids = null
 }
