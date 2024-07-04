@@ -2,11 +2,11 @@ provider "aws" {
   region = var.aws_region
 }
 locals {
-  defaultPowerValues = "[128,256,512,1024,1536,3008]"
-  minRAM             = 128
-  baseCosts          = jsonencode({"x86_64": {"ap-east-1":2.9e-9,"af-south-1":2.8e-9,"me-south-1":2.6e-9,"eu-south-1":2.4e-9,"ap-northeast-3":2.7e-9,"default":2.1e-9}, "arm64": {"default":1.7e-9}})
-  sfCosts            = jsonencode({ "default" : 0.000025, "us-gov-west-1" : 0.00003, "ap-northeast-2" : 0.0000271, "eu-south-1" : 0.00002625, "af-south-1" : 0.00002975, "us-west-1" : 0.0000279, "eu-west-3" : 0.0000297, "ap-east-1" : 0.0000275, "me-south-1" : 0.0000275, "ap-south-1" : 0.0000285, "us-gov-east-1" : 0.00003, "sa-east-1" : 0.0000375 })
-  visualizationURL   = "https://lambda-power-tuning.show/"
+  default_power_values = "[128,256,512,1024,1536,3008]"
+  min_ram              = 128
+  base_costs          = jsonencode({"x86_64": {"ap-east-1":2.9e-9,"af-south-1":2.8e-9,"me-south-1":2.6e-9,"eu-south-1":2.4e-9,"ap-northeast-3":2.7e-9,"default":2.1e-9}, "arm64": {"default":1.7e-9}})
+  sf_costs            = jsonencode({ "default" : 0.000025, "us-gov-west-1" : 0.00003, "ap-northeast-2" : 0.0000271, "eu-south-1" : 0.00002625, "af-south-1" : 0.00002975, "us-west-1" : 0.0000279, "eu-west-3" : 0.0000297, "ap-east-1" : 0.0000275, "me-south-1" : 0.0000275, "ap-south-1" : 0.0000285, "us-gov-east-1" : 0.00003, "sa-east-1" : 0.0000375 })
+  visualization_url   = "https://lambda-power-tuning.show/"
 
   role_path = var.role_path_override != "" ? var.role_path_override : "/${var.lambda_function_prefix}/"
 
@@ -54,7 +54,7 @@ locals {
 # State machine
 ################################################################################
 
-resource "aws_sfn_state_machine" "state-machine" {
+resource "aws_sfn_state_machine" "state_machine" {
   name_prefix = var.lambda_function_prefix
   role_arn = aws_iam_role.sfn_role.arn
 
@@ -112,7 +112,7 @@ data "aws_iam_policy" "analyzer_policy" {
   name = "AWSLambdaExecute"
 }
 
-resource "aws_iam_policy_attachment" "execute-attach" {
+resource "aws_iam_policy_attachment" "execute_attach" {
   name       = "execute-attachment"
   roles      = [aws_iam_role.analyzer_role.name, aws_iam_role.optimizer_role.name, aws_iam_role.executor_role.name, aws_iam_role.cleaner_role.name, aws_iam_role.initializer_role.name]
   policy_arn = data.aws_iam_policy.analyzer_policy.arn
@@ -125,7 +125,7 @@ resource "aws_iam_policy" "executor_policy" {
   policy = local.executor_template
 }
 
-resource "aws_iam_policy_attachment" "executor-attach" {
+resource "aws_iam_policy_attachment" "executor_attach" {
   name       = "executor-attachment"
   roles      = [aws_iam_role.executor_role.name]
   policy_arn = aws_iam_policy.executor_policy.arn
@@ -138,7 +138,7 @@ resource "aws_iam_policy" "initializer_policy" {
   policy = local.initializer_template
 }
 
-resource "aws_iam_policy_attachment" "initializer-attach" {
+resource "aws_iam_policy_attachment" "initializer_attach" {
   name       = "initializer-attachment"
   roles      = [aws_iam_role.initializer_role.name]
   policy_arn = aws_iam_policy.initializer_policy.arn
@@ -151,7 +151,7 @@ resource "aws_iam_policy" "cleaner_policy" {
   policy = local.cleaner_template
 }
 
-resource "aws_iam_policy_attachment" "cleaner-attach" {
+resource "aws_iam_policy_attachment" "cleaner_attach" {
   name       = "cleaner-attachment"
   roles      = [aws_iam_role.cleaner_role.name]
   policy_arn = aws_iam_policy.cleaner_policy.arn
@@ -164,7 +164,7 @@ resource "aws_iam_policy" "optimizer_policy" {
   policy = local.optimizer_template
 }
 
-resource "aws_iam_policy_attachment" "optimizer-attach" {
+resource "aws_iam_policy_attachment" "optimizer_attach" {
   name       = "optimizer-attachment"
   roles      = [aws_iam_role.optimizer_role.name]
   policy_arn = aws_iam_policy.optimizer_policy.arn
@@ -175,7 +175,7 @@ data "aws_iam_policy" "sfn_policy" {
   name = "AWSLambdaRole"
 }
 
-resource "aws_iam_policy_attachment" "sfn-attach" {
+resource "aws_iam_policy_attachment" "sfn_attach" {
   name       = "sfn-attachment"
   roles      = [aws_iam_role.sfn_role.name]
   policy_arn = data.aws_iam_policy.sfn_policy.arn
@@ -213,11 +213,11 @@ resource "aws_lambda_function" "analyzer" {
 
   environment {
     variables = {
-      defaultPowerValues = local.defaultPowerValues,
-      minRAM             = local.minRAM,
-      baseCosts          = local.baseCosts,
-      sfCosts            = local.sfCosts,
-      visualizationURL   = local.visualizationURL
+      defaultPowerValues = local.default_power_values,
+      minRAM             = local.min_ram,
+      baseCosts          = local.base_costs,
+      sfCosts            = local.sf_costs,
+      visualizationURL   = local.visualization_url
     }
   }
 
@@ -250,11 +250,11 @@ resource "aws_lambda_function" "cleaner" {
 
   environment {
     variables = {
-      defaultPowerValues = local.defaultPowerValues,
-      minRAM             = local.minRAM,
-      baseCosts          = local.baseCosts,
-      sfCosts            = local.sfCosts,
-      visualizationURL   = local.visualizationURL
+      defaultPowerValues = local.default_power_values,
+      minRAM             = local.min_ram,
+      baseCosts          = local.base_costs,
+      sfCosts            = local.sf_costs,
+      visualizationURL   = local.visualization_url
     }
   }
 
@@ -287,11 +287,11 @@ resource "aws_lambda_function" "executor" {
 
   environment {
     variables = {
-      defaultPowerValues = local.defaultPowerValues,
-      minRAM             = local.minRAM,
-      baseCosts          = local.baseCosts,
-      sfCosts            = local.sfCosts,
-      visualizationURL   = local.visualizationURL
+      defaultPowerValues = local.default_power_values,
+      minRAM             = local.min_ram,
+      baseCosts          = local.base_costs,
+      sfCosts            = local.sf_costs,
+      visualizationURL   = local.visualization_url
     }
   }
 
@@ -324,11 +324,11 @@ resource "aws_lambda_function" "initializer" {
 
   environment {
     variables = {
-      defaultPowerValues = local.defaultPowerValues,
-      minRAM             = local.minRAM,
-      baseCosts          = local.baseCosts,
-      sfCosts            = local.sfCosts,
-      visualizationURL   = local.visualizationURL
+      defaultPowerValues = local.default_power_values,
+      minRAM             = local.min_ram,
+      baseCosts          = local.base_costs,
+      sfCosts            = local.sf_costs,
+      visualizationURL   = local.visualization_url
     }
   }
 
@@ -361,11 +361,11 @@ resource "aws_lambda_function" "optimizer" {
 
   environment {
     variables = {
-      defaultPowerValues = local.defaultPowerValues,
-      minRAM             = local.minRAM,
-      baseCosts          = local.baseCosts,
-      sfCosts            = local.sfCosts,
-      visualizationURL   = local.visualizationURL
+      defaultPowerValues = local.default_power_values,
+      minRAM             = local.min_ram,
+      baseCosts          = local.base_costs,
+      sfCosts            = local.sf_costs,
+      visualizationURL   = local.visualization_url
     }
   }
 
@@ -390,7 +390,7 @@ resource "null_resource" "build_layer" {
     interpreter = ["bash"]
   }
   triggers = {
-    always_run = "${timestamp()}"
+    always_run = timestamp()
   }
 }
 

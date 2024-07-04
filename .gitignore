@@ -45,3 +45,5 @@ go.sum
 # Terraform tests 
 tests/*.auto.tfvars
 .env
+examples/basic/.terraform
+examples/basic/.aws-lambda-power-tuning
