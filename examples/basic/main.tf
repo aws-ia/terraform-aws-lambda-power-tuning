@@ -7,6 +7,9 @@
 locals {
   aws_region = "us-west-2"
 }
+provider "aws" {
+  region = local.aws_region
+}
 data "aws_caller_identity" "current" {}
 
 module "aws_power_tuning" {
