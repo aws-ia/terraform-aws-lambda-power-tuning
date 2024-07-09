@@ -1,12 +1,9 @@
-provider "aws" {
-  region = var.aws_region
-}
 locals {
   default_power_values = "[128,256,512,1024,1536,3008]"
   min_ram              = 128
-  base_costs          = jsonencode({"x86_64": {"ap-east-1":2.9e-9,"af-south-1":2.8e-9,"me-south-1":2.6e-9,"eu-south-1":2.4e-9,"ap-northeast-3":2.7e-9,"default":2.1e-9}, "arm64": {"default":1.7e-9}})
-  sf_costs            = jsonencode({ "default" : 0.000025, "us-gov-west-1" : 0.00003, "ap-northeast-2" : 0.0000271, "eu-south-1" : 0.00002625, "af-south-1" : 0.00002975, "us-west-1" : 0.0000279, "eu-west-3" : 0.0000297, "ap-east-1" : 0.0000275, "me-south-1" : 0.0000275, "ap-south-1" : 0.0000285, "us-gov-east-1" : 0.00003, "sa-east-1" : 0.0000375 })
-  visualization_url   = "https://lambda-power-tuning.show/"
+  base_costs           = jsonencode({ "x86_64" : { "ap-east-1" : 2.9e-9, "af-south-1" : 2.8e-9, "me-south-1" : 2.6e-9, "eu-south-1" : 2.4e-9, "ap-northeast-3" : 2.7e-9, "default" : 2.1e-9 }, "arm64" : { "default" : 1.7e-9 } })
+  sf_costs             = jsonencode({ "default" : 0.000025, "us-gov-west-1" : 0.00003, "ap-northeast-2" : 0.0000271, "eu-south-1" : 0.00002625, "af-south-1" : 0.00002975, "us-west-1" : 0.0000279, "eu-west-3" : 0.0000297, "ap-east-1" : 0.0000275, "me-south-1" : 0.0000275, "ap-south-1" : 0.0000285, "us-gov-east-1" : 0.00003, "sa-east-1" : 0.0000375 })
+  visualization_url    = "https://lambda-power-tuning.show/"
 
   role_path = var.role_path_override != "" ? var.role_path_override : "/${var.lambda_function_prefix}/"
 
@@ -20,35 +17,10 @@ locals {
       optimizerArn   = aws_lambda_function.optimizer.arn
     }
   )
-
-  cleaner_template = templatefile(
-    "${path.module}/policies/cleaner.json",
-    {
-      account_id = var.aws_account_id
-    }
-  )
-
-  executor_template = templatefile(
-    "${path.module}/policies/executor.json",
-    {
-      account_id = var.aws_account_id
-    }
-  )
-
-  initializer_template = templatefile(
-    "${path.module}/policies/initializer.json",
-    {
-      account_id = var.aws_account_id
-    }
-  )
-
-  optimizer_template = templatefile(
-    "${path.module}/policies/optimizer.json",
-    {
-      account_id = var.aws_account_id
-    }
-  )
 }
+
+data "aws_caller_identity" "current" {}
+
 
 ################################################################################
 # State machine
@@ -56,7 +28,7 @@ locals {
 
 resource "aws_sfn_state_machine" "state_machine" {
   name_prefix = var.lambda_function_prefix
-  role_arn = aws_iam_role.sfn_role.arn
+  role_arn    = aws_iam_role.sfn_role.arn
 
   definition = local.state_machine
 }
@@ -65,46 +37,125 @@ resource "aws_sfn_state_machine" "state_machine" {
 # Roles and Policies
 ################################################################################
 
+data "aws_iam_policy_document" "cleaner" {
+  statement {
+    sid = "1"
+    actions = [
+      "lambda:GetAlias",
+      "lambda:DeleteAlias",
+      "lambda:DeleteFunction"
+    ]
+    resources = ["arn:aws:lambda:*:${data.aws_caller_identity.current.account_id}:function:*"]
+  }
+}
+
+data "aws_iam_policy_document" "executor" {
+  statement {
+    sid = "1"
+    actions = [
+      "lambda:InvokeFunction",
+      "lambda:GetFunctionConfiguration"
+    ]
+    resources = ["arn:aws:lambda:*:${data.aws_caller_identity.current.account_id}:function:*"]
+  }
+}
+
+data "aws_iam_policy_document" "initializer" {
+  statement {
+    sid = "1"
+    actions = [
+      "lambda:GetAlias",
+      "lambda:GetFunctionConfiguration",
+      "lambda:PublishVersion",
+      "lambda:UpdateFunctionConfiguration",
+      "lambda:CreateAlias",
+      "lambda:UpdateAlias"
+    ]
+    resources = ["arn:aws:lambda:*:${data.aws_caller_identity.current.account_id}:function:*"]
+  }
+}
+
+data "aws_iam_policy_document" "lambda" {
+  statement {
+    sid = "1"
+    actions = [
+      "sts:AssumeRole"
+    ]
+    principals {
+      type        = "Service"
+      identifiers = ["lambda.amazonaws.com"]
+    }
+  }
+}
+
+data "aws_iam_policy_document" "sfn" {
+  statement {
+    sid = "1"
+    actions = [
+      "sts:AssumeRole"
+    ]
+    principals {
+      type        = "Service"
+      identifiers = ["states.amazonaws.com"]
+    }
+  }
+}
+
+data "aws_iam_policy_document" "optimizer" {
+  statement {
+    sid = "1"
+    actions = [
+      "lambda:GetAlias",
+      "lambda:PublishVersion",
+      "lambda:UpdateFunctionConfiguration",
+      "lambda:GetFunctionConfiguration",
+      "lambda:CreateAlias",
+      "lambda:UpdateAlias"
+    ]
+    resources = ["arn:aws:lambda:*:${data.aws_caller_identity.current.account_id}:function:*"]
+  }
+}
+
 resource "aws_iam_role" "analyzer_role" {
   name                 = "${var.lambda_function_prefix}-analyzer_role"
   permissions_boundary = var.permissions_boundary
   path                 = local.role_path
-  assume_role_policy   = file("${path.module}/policies/lambda.json")
+  assume_role_policy   = data.aws_iam_policy_document.lambda.json
 }
 
 resource "aws_iam_role" "optimizer_role" {
   name                 = "${var.lambda_function_prefix}-optimizer_role"
   permissions_boundary = var.permissions_boundary
   path                 = local.role_path
-  assume_role_policy   = file("${path.module}/policies/lambda.json")
+  assume_role_policy   = data.aws_iam_policy_document.lambda.json
 }
 
 resource "aws_iam_role" "executor_role" {
   name                 = "${var.lambda_function_prefix}-executor_role"
   permissions_boundary = var.permissions_boundary
   path                 = local.role_path
-  assume_role_policy   = file("${path.module}/policies/lambda.json")
+  assume_role_policy   = data.aws_iam_policy_document.lambda.json
 }
 
 resource "aws_iam_role" "initializer_role" {
   name                 = "${var.lambda_function_prefix}-initializer_role"
   permissions_boundary = var.permissions_boundary
   path                 = local.role_path
-  assume_role_policy   = file("${path.module}/policies/lambda.json")
+  assume_role_policy   = data.aws_iam_policy_document.lambda.json
 }
 
 resource "aws_iam_role" "cleaner_role" {
   name                 = "${var.lambda_function_prefix}-cleaner_role"
   permissions_boundary = var.permissions_boundary
   path                 = local.role_path
-  assume_role_policy   = file("${path.module}/policies/lambda.json")
+  assume_role_policy   = data.aws_iam_policy_document.lambda.json
 }
 
 resource "aws_iam_role" "sfn_role" {
   name                 = "${var.lambda_function_prefix}-sfn_role"
   permissions_boundary = var.permissions_boundary
   path                 = local.role_path
-  assume_role_policy   = file("${path.module}/policies/sfn.json")
+  assume_role_policy   = data.aws_iam_policy_document.sfn.json
 }
 
 
@@ -122,7 +173,7 @@ resource "aws_iam_policy" "executor_policy" {
   name        = "${var.lambda_function_prefix}_executor-policy"
   description = "Lambda power tuning policy - Executor - Terraform"
 
-  policy = local.executor_template
+  policy = data.aws_iam_policy_document.executor.json
 }
 
 resource "aws_iam_policy_attachment" "executor_attach" {
@@ -135,7 +186,7 @@ resource "aws_iam_policy" "initializer_policy" {
   name        = "${var.lambda_function_prefix}_initializer-policy"
   description = "Lambda power tuning policy - Initializer - Terraform"
 
-  policy = local.initializer_template
+  policy = data.aws_iam_policy_document.initializer.json
 }
 
 resource "aws_iam_policy_attachment" "initializer_attach" {
@@ -148,7 +199,7 @@ resource "aws_iam_policy" "cleaner_policy" {
   name        = "${var.lambda_function_prefix}_cleaner-policy"
   description = "Lambda power tuning policy - Cleaner - Terraform"
 
-  policy = local.cleaner_template
+  policy = data.aws_iam_policy_document.cleaner.json
 }
 
 resource "aws_iam_policy_attachment" "cleaner_attach" {
@@ -161,7 +212,7 @@ resource "aws_iam_policy" "optimizer_policy" {
   name        = "${var.lambda_function_prefix}_optimizer-policy"
   description = "Lambda power tuning policy - Optimizer - Terraform"
 
-  policy = local.optimizer_template
+  policy = data.aws_iam_policy_document.optimizer.json
 }
 
 resource "aws_iam_policy_attachment" "optimizer_attach" {
@@ -374,11 +425,11 @@ resource "aws_lambda_function" "optimizer" {
 
 
 resource "aws_lambda_layer_version" "lambda_layer" {
-  filename    = ".aws-lambda-power-tuning/src/layer.zip"
-  layer_name  = "AWS-SDK-v3"
-  description = "AWS SDK 3"
+  filename                 = ".aws-lambda-power-tuning/src/layer.zip"
+  layer_name               = "AWS-SDK-v3"
+  description              = "AWS SDK 3"
   compatible_architectures = ["x86_64"]
-  compatible_runtimes = ["nodejs20.x"]
+  compatible_runtimes      = ["nodejs20.x"]
 
   depends_on = [data.archive_file.layer]
 }

@@ -1,4 +1,8 @@
 <!-- BEGIN_TF_DOCS -->
+# Basic example
+
+Terraform module example that deploys the [Lambda power tuning solution](https://github.com/alexcasalboni/aws-lambda-power-tuning)
+
 ## Requirements
 
 | Name | Version |
@@ -8,9 +12,7 @@
 
 ## Providers
 
-| Name | Version |
-|------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 5.26 |
+No providers.
 
 ## Modules
 
@@ -20,9 +22,7 @@
 
 ## Resources
 
-| Name | Type |
-|------|------|
-| [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
+No resources.
 
 ## Inputs
 

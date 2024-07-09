@@ -1,20 +1,11 @@
 ################################################################################
 # AWS Lambda power tuning vars
 ################################################################################
-variable "aws_account_id" {
-  description = "The account that the AWS lambda power tuning app is going to be deployed"
-  type        = string
-}
-
-variable "aws_region" {
-  description = "The region that the AWS lambda power tuning app is going to be deployed"
-  type        = string
-}
 
 variable "lambda_function_prefix" {
-  default = "lambda_power_tuning"
+  default     = "lambda_power_tuning"
   description = "Prefix used for the names of Lambda functions, Step Functions state machines, IAM roles, and IAM policies."
-  type = string
+  type        = string
 }
 
 variable "role_path_override" {

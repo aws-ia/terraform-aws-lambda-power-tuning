@@ -1,12 +1,12 @@
 #!/bin/bash
 
 # clone aws-lambda-power-tuning repo if not present
-if [ ! -d .aws-lambda-power-tuning ]; then
-   git clone https://github.com/alexcasalboni/aws-lambda-power-tuning.git .aws-lambda-power-tuning
+if [ ! -d ./src/aws-lambda-power-tuning ]; then
+   git clone https://github.com/alexcasalboni/aws-lambda-power-tuning.git ./src/aws-lambda-power-tuning
 fi
 
 # make sure we're working on the layer folder
-cd .aws-lambda-power-tuning/layer-sdk
+cd ./src/aws-lambda-power-tuning/layer-sdk
 
 # create subfolders
 ## ./src is referenced by the LayerVersion resource (.gitignored)
