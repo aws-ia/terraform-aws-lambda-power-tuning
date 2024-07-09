@@ -17,6 +17,7 @@ locals {
       optimizerArn   = aws_lambda_function.optimizer.arn
     }
   )
+  lambda_runtime = "nodejs20.x"
 }
 
 data "aws_caller_identity" "current" {}
@@ -258,7 +259,7 @@ resource "aws_lambda_function" "analyzer" {
   # source_code_hash = "${base64sha256(file("lambda_function_payload.zip"))}"
   source_code_hash = data.archive_file.app.output_base64sha256
 
-  runtime = "nodejs20.x"
+  runtime = local.lambda_runtime
 
   dynamic "vpc_config" {
     for_each = var.vpc_subnet_ids != null && var.vpc_security_group_ids != null ? [true] : []
@@ -296,7 +297,7 @@ resource "aws_lambda_function" "cleaner" {
   # source_code_hash = "${base64sha256(file("lambda_function_payload.zip"))}"
   source_code_hash = data.archive_file.app.output_base64sha256
 
-  runtime = "nodejs20.x"
+  runtime = local.lambda_runtime
 
   dynamic "vpc_config" {
     for_each = var.vpc_subnet_ids != null && var.vpc_security_group_ids != null ? [true] : []
@@ -334,7 +335,7 @@ resource "aws_lambda_function" "executor" {
   # source_code_hash = "${base64sha256(file("lambda_function_payload.zip"))}"
   source_code_hash = data.archive_file.app.output_base64sha256
 
-  runtime = "nodejs20.x"
+  runtime = local.lambda_runtime
 
   dynamic "vpc_config" {
     for_each = var.vpc_subnet_ids != null && var.vpc_security_group_ids != null ? [true] : []
@@ -372,7 +373,7 @@ resource "aws_lambda_function" "initializer" {
   # source_code_hash = "${base64sha256(file("lambda_function_payload.zip"))}"
   source_code_hash = data.archive_file.app.output_base64sha256
 
-  runtime = "nodejs20.x"
+  runtime = local.lambda_runtime
 
   dynamic "vpc_config" {
     for_each = var.vpc_subnet_ids != null && var.vpc_security_group_ids != null ? [true] : []
@@ -410,7 +411,7 @@ resource "aws_lambda_function" "optimizer" {
   # source_code_hash = "${base64sha256(file("lambda_function_payload.zip"))}"
   source_code_hash = data.archive_file.app.output_base64sha256
 
-  runtime = "nodejs20.x"
+  runtime = local.lambda_runtime
 
   dynamic "vpc_config" {
     for_each = var.vpc_subnet_ids != null && var.vpc_security_group_ids != null ? [true] : []
@@ -440,7 +441,7 @@ resource "aws_lambda_layer_version" "lambda_layer" {
   layer_name               = "AWS-SDK-v3"
   description              = "AWS SDK 3"
   compatible_architectures = ["x86_64"]
-  compatible_runtimes      = ["nodejs20.x"]
+  compatible_runtimes      = [local.lambda_runtime]
 
   depends_on = [data.archive_file.layer]
 
