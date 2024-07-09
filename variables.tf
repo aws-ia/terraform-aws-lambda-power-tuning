@@ -31,3 +31,9 @@ variable "vpc_security_group_ids" {
   type        = list(string)
   default     = null
 }
+
+variable "tags" {
+  description = "A map of tags to assign to the resources."
+  type        = map(string)
+  default     = { "app" : "lambda_power_tuning" }
+}

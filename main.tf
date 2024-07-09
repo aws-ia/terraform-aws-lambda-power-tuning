@@ -121,6 +121,7 @@ resource "aws_iam_role" "analyzer_role" {
   permissions_boundary = var.permissions_boundary
   path                 = local.role_path
   assume_role_policy   = data.aws_iam_policy_document.lambda.json
+  tags                 = var.tags
 }
 
 resource "aws_iam_role" "optimizer_role" {
@@ -128,6 +129,7 @@ resource "aws_iam_role" "optimizer_role" {
   permissions_boundary = var.permissions_boundary
   path                 = local.role_path
   assume_role_policy   = data.aws_iam_policy_document.lambda.json
+  tags                 = var.tags
 }
 
 resource "aws_iam_role" "executor_role" {
@@ -135,6 +137,7 @@ resource "aws_iam_role" "executor_role" {
   permissions_boundary = var.permissions_boundary
   path                 = local.role_path
   assume_role_policy   = data.aws_iam_policy_document.lambda.json
+  tags                 = var.tags
 }
 
 resource "aws_iam_role" "initializer_role" {
@@ -142,6 +145,7 @@ resource "aws_iam_role" "initializer_role" {
   permissions_boundary = var.permissions_boundary
   path                 = local.role_path
   assume_role_policy   = data.aws_iam_policy_document.lambda.json
+  tags                 = var.tags
 }
 
 resource "aws_iam_role" "cleaner_role" {
@@ -149,6 +153,7 @@ resource "aws_iam_role" "cleaner_role" {
   permissions_boundary = var.permissions_boundary
   path                 = local.role_path
   assume_role_policy   = data.aws_iam_policy_document.lambda.json
+  tags                 = var.tags
 }
 
 resource "aws_iam_role" "sfn_role" {
@@ -156,6 +161,7 @@ resource "aws_iam_role" "sfn_role" {
   permissions_boundary = var.permissions_boundary
   path                 = local.role_path
   assume_role_policy   = data.aws_iam_policy_document.sfn.json
+  tags                 = var.tags
 }
 
 
@@ -172,8 +178,8 @@ resource "aws_iam_policy_attachment" "execute_attach" {
 resource "aws_iam_policy" "executor_policy" {
   name        = "${var.lambda_function_prefix}_executor-policy"
   description = "Lambda power tuning policy - Executor - Terraform"
-
-  policy = data.aws_iam_policy_document.executor.json
+  policy      = data.aws_iam_policy_document.executor.json
+  tags        = var.tags
 }
 
 resource "aws_iam_policy_attachment" "executor_attach" {
@@ -185,8 +191,8 @@ resource "aws_iam_policy_attachment" "executor_attach" {
 resource "aws_iam_policy" "initializer_policy" {
   name        = "${var.lambda_function_prefix}_initializer-policy"
   description = "Lambda power tuning policy - Initializer - Terraform"
-
-  policy = data.aws_iam_policy_document.initializer.json
+  policy      = data.aws_iam_policy_document.initializer.json
+  tags        = var.tags
 }
 
 resource "aws_iam_policy_attachment" "initializer_attach" {
@@ -198,8 +204,8 @@ resource "aws_iam_policy_attachment" "initializer_attach" {
 resource "aws_iam_policy" "cleaner_policy" {
   name        = "${var.lambda_function_prefix}_cleaner-policy"
   description = "Lambda power tuning policy - Cleaner - Terraform"
-
-  policy = data.aws_iam_policy_document.cleaner.json
+  policy      = data.aws_iam_policy_document.cleaner.json
+  tags        = var.tags
 }
 
 resource "aws_iam_policy_attachment" "cleaner_attach" {
@@ -211,8 +217,8 @@ resource "aws_iam_policy_attachment" "cleaner_attach" {
 resource "aws_iam_policy" "optimizer_policy" {
   name        = "${var.lambda_function_prefix}_optimizer-policy"
   description = "Lambda power tuning policy - Optimizer - Terraform"
-
-  policy = data.aws_iam_policy_document.optimizer.json
+  policy      = data.aws_iam_policy_document.optimizer.json
+  tags        = var.tags
 }
 
 resource "aws_iam_policy_attachment" "optimizer_attach" {
@@ -239,7 +245,7 @@ resource "aws_iam_policy_attachment" "sfn_attach" {
 
 
 resource "aws_lambda_function" "analyzer" {
-  filename      = ".aws-lambda-power-tuning/src/app.zip"
+  filename      = "src/aws-lambda-power-tuning/src/app.zip"
   function_name = "${var.lambda_function_prefix}-analyzer"
   role          = aws_iam_role.analyzer_role.arn
   handler       = "analyzer.handler"
@@ -273,10 +279,11 @@ resource "aws_lambda_function" "analyzer" {
   }
 
   depends_on = [aws_lambda_layer_version.lambda_layer]
+  tags       = var.tags
 }
 
 resource "aws_lambda_function" "cleaner" {
-  filename      = ".aws-lambda-power-tuning/src/app.zip"
+  filename      = "src/aws-lambda-power-tuning/src/app.zip"
   function_name = "${var.lambda_function_prefix}-cleaner"
   role          = aws_iam_role.cleaner_role.arn
   handler       = "cleaner.handler"
@@ -310,10 +317,11 @@ resource "aws_lambda_function" "cleaner" {
   }
 
   depends_on = [aws_lambda_layer_version.lambda_layer]
+  tags       = var.tags
 }
 
 resource "aws_lambda_function" "executor" {
-  filename      = ".aws-lambda-power-tuning/src/app.zip"
+  filename      = "src/aws-lambda-power-tuning/src/app.zip"
   function_name = "${var.lambda_function_prefix}-executor"
   role          = aws_iam_role.executor_role.arn
   handler       = "executor.handler"
@@ -347,10 +355,11 @@ resource "aws_lambda_function" "executor" {
   }
 
   depends_on = [aws_lambda_layer_version.lambda_layer]
+  tags       = var.tags
 }
 
 resource "aws_lambda_function" "initializer" {
-  filename      = ".aws-lambda-power-tuning/src/app.zip"
+  filename      = "src/aws-lambda-power-tuning/src/app.zip"
   function_name = "${var.lambda_function_prefix}-initializer"
   role          = aws_iam_role.initializer_role.arn
   handler       = "initializer.handler"
@@ -384,10 +393,11 @@ resource "aws_lambda_function" "initializer" {
   }
 
   depends_on = [aws_lambda_layer_version.lambda_layer]
+  tags       = var.tags
 }
 
 resource "aws_lambda_function" "optimizer" {
-  filename      = ".aws-lambda-power-tuning/src/app.zip"
+  filename      = "src/aws-lambda-power-tuning/src/app.zip"
   function_name = "${var.lambda_function_prefix}-optimizer"
   role          = aws_iam_role.optimizer_role.arn
   handler       = "optimizer.handler"
@@ -421,47 +431,52 @@ resource "aws_lambda_function" "optimizer" {
   }
 
   depends_on = [aws_lambda_layer_version.lambda_layer]
+  tags       = var.tags
 }
 
 
 resource "aws_lambda_layer_version" "lambda_layer" {
-  filename                 = ".aws-lambda-power-tuning/src/layer.zip"
+  filename                 = "src/aws-lambda-power-tuning/src/layer.zip"
   layer_name               = "AWS-SDK-v3"
   description              = "AWS SDK 3"
   compatible_architectures = ["x86_64"]
   compatible_runtimes      = ["nodejs20.x"]
 
   depends_on = [data.archive_file.layer]
+
 }
 
+resource "terraform_data" "always_replace" {
+  input = timestamp()
+}
 
-resource "null_resource" "build_layer" {
+resource "terraform_data" "build_layer" {
   provisioner "local-exec" {
     command     = "${path.module}/scripts/build_lambda_layer.sh"
     interpreter = ["bash"]
   }
-  triggers = {
-    always_run = timestamp()
+  lifecycle {
+    replace_triggered_by = [terraform_data.always_replace]
   }
 }
 
 data "archive_file" "layer" {
   type        = "zip"
-  source_dir  = ".aws-lambda-power-tuning/layer-sdk/src/"
-  output_path = ".aws-lambda-power-tuning/src/layer.zip"
+  source_dir  = "src/aws-lambda-power-tuning/layer-sdk/src/"
+  output_path = "src/aws-lambda-power-tuning/src/layer.zip"
 
   depends_on = [
-    null_resource.build_layer
+    terraform_data.build_layer
   ]
 }
 
 data "archive_file" "app" {
   type        = "zip"
-  output_path = ".aws-lambda-power-tuning/src/app.zip"
-  source_dir  = ".aws-lambda-power-tuning/lambda/"
+  output_path = "src/aws-lambda-power-tuning/src/app.zip"
+  source_dir  = "src/aws-lambda-power-tuning/lambda/"
 
   depends_on = [
-    null_resource.build_layer
+    terraform_data.build_layer
   ]
 }
 

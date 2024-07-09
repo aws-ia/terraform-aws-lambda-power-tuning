@@ -1,7 +1,7 @@
 <!-- BEGIN_TF_DOCS -->
 # AWS Lambda Power Tuning Terraform module
 
-Terraform module which deploys the [Lambda power tuning solution](https://github.com/alexcasalboni/aws-lambda-power-tuning)
+Terraform module to automate the deployment of the [Lambda power tuning solution](https://github.com/alexcasalboni/aws-lambda-power-tuning)
 
 ## Requirements
 
@@ -18,7 +18,7 @@ Terraform module which deploys the [Lambda power tuning solution](https://github
 |------|---------|
 | <a name="provider_archive"></a> [archive](#provider\_archive) | >= 2.4.2 |
 | <a name="provider_aws"></a> [aws](#provider\_aws) | >= 5.26 |
-| <a name="provider_null"></a> [null](#provider\_null) | >= 3.2.2 |
+| <a name="provider_terraform"></a> [terraform](#provider\_terraform) | n/a |
 
 ## Modules
 
@@ -51,7 +51,8 @@ No modules.
 | [aws_lambda_function.optimizer](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_function) | resource |
 | [aws_lambda_layer_version.lambda_layer](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_layer_version) | resource |
 | [aws_sfn_state_machine.state_machine](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sfn_state_machine) | resource |
-| [null_resource.build_layer](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
+| [terraform_data.always_replace](https://registry.terraform.io/providers/hashicorp/terraform/latest/docs/resources/data) | resource |
+| [terraform_data.build_layer](https://registry.terraform.io/providers/hashicorp/terraform/latest/docs/resources/data) | resource |
 | [archive_file.app](https://registry.terraform.io/providers/hashicorp/archive/latest/docs/data-sources/file) | data source |
 | [archive_file.layer](https://registry.terraform.io/providers/hashicorp/archive/latest/docs/data-sources/file) | data source |
 | [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
@@ -71,6 +72,7 @@ No modules.
 | <a name="input_lambda_function_prefix"></a> [lambda\_function\_prefix](#input\_lambda\_function\_prefix) | Prefix used for the names of Lambda functions, Step Functions state machines, IAM roles, and IAM policies. | `string` | `"lambda_power_tuning"` | no |
 | <a name="input_permissions_boundary"></a> [permissions\_boundary](#input\_permissions\_boundary) | ARN of the policy that is used to set the permissions boundary for the role. | `string` | `null` | no |
 | <a name="input_role_path_override"></a> [role\_path\_override](#input\_role\_path\_override) | IAM Role path to use for each Lambda function's role, instead of the default path /lambda\_power\_tuning/ (see variable lambda\_function\_prefix). | `string` | `""` | no |
+| <a name="input_tags"></a> [tags](#input\_tags) | A map of tags to assign to the resources. | `map(string)` | <pre>{<br>  "app": "lambda_power_tuning"<br>}</pre> | no |
 | <a name="input_vpc_security_group_ids"></a> [vpc\_security\_group\_ids](#input\_vpc\_security\_group\_ids) | List of security group ids when Lambda Function should run in the VPC. | `list(string)` | `null` | no |
 | <a name="input_vpc_subnet_ids"></a> [vpc\_subnet\_ids](#input\_vpc\_subnet\_ids) | List of subnet ids when Lambda Function should run in the VPC. Usually private or intra subnets. | `list(string)` | `null` | no |
 

@@ -1,7 +1,7 @@
 <!-- BEGIN_TF_DOCS -->
 # Basic example
 
-Terraform module example that deploys the [Lambda power tuning solution](https://github.com/alexcasalboni/aws-lambda-power-tuning)
+Terraform example that deploys the [Lambda power tuning solution](https://github.com/alexcasalboni/aws-lambda-power-tuning) using the terraform module aws-lambda-power-tuning
 
 ## Requirements
 
