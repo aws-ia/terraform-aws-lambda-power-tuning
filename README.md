@@ -3,10 +3,6 @@
 
 Terraform module which deploys the [Lambda power tuning solution](https://github.com/alexcasalboni/aws-lambda-power-tuning)
 
-## Readme Content
-
-This file will contain any instructional information about this module.
-
 ## Requirements
 
 | Name | Version |
