@@ -3,3 +3,10 @@
 # per use-case. The code below should not be copied directly but referenced in order
 # to build your own root module that invokes this module
 #####################################################################################
+provider "aws" {
+  region = "us-west-2"
+}
+
+module "aws_power_tuning" {
+  source = "../../"
+}

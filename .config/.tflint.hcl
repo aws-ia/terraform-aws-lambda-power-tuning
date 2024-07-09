@@ -64,3 +64,12 @@ rule "terraform_standard_module_structure" {
 rule "terraform_workspace_remote" {
   enabled = true
 }
+
+
+## Custom rules
+
+# Disabling rule for invalid runtime since is flagging nodejs20.x as invalid, but it is a valid runtime 
+# https://docs.aws.amazon.com/lambda/latest/api/API_CreateFunction.html#API_CreateFunction_RequestSyntax
+rule "aws_lambda_function_invalid_runtime"{
+  enabled = false
+}
