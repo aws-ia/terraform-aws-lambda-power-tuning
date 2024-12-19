@@ -180,13 +180,13 @@ data "aws_iam_policy" "analyzer_policy" {
 }
 
 resource "aws_iam_role_policy_attachment" "execute_attach" {
-  for_each = [
+  for_each = toset([
     aws_iam_role.analyzer_role.name,
     aws_iam_role.optimizer_role.name,
     aws_iam_role.executor_role.name,
     aws_iam_role.cleaner_role.name,
     aws_iam_role.initializer_role.name
-  ]
+  ])
   role       = each.key
   policy_arn = data.aws_iam_policy.analyzer_policy.arn
 }
