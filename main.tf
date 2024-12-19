@@ -170,9 +170,15 @@ data "aws_iam_policy" "analyzer_policy" {
   name = "AWSLambdaExecute"
 }
 
-resource "aws_iam_policy_attachment" "execute_attach" {
-  name       = "execute-attachment"
-  roles      = [aws_iam_role.analyzer_role.name, aws_iam_role.optimizer_role.name, aws_iam_role.executor_role.name, aws_iam_role.cleaner_role.name, aws_iam_role.initializer_role.name]
+resource "aws_iam_role_policy_attachment" "execute_attach" {
+  for_each = [
+    aws_iam_role.analyzer_role.name,
+    aws_iam_role.optimizer_role.name,
+    aws_iam_role.executor_role.name,
+    aws_iam_role.cleaner_role.name,
+    aws_iam_role.initializer_role.name
+  ]
+  role       = each.key
   policy_arn = data.aws_iam_policy.analyzer_policy.arn
 }
 
@@ -183,9 +189,8 @@ resource "aws_iam_policy" "executor_policy" {
   tags        = var.tags
 }
 
-resource "aws_iam_policy_attachment" "executor_attach" {
-  name       = "executor-attachment"
-  roles      = [aws_iam_role.executor_role.name]
+resource "aws_iam_role_policy_attachment" "executor_attach" {
+  role       = aws_iam_role.executor_role.name
   policy_arn = aws_iam_policy.executor_policy.arn
 }
 
@@ -196,9 +201,8 @@ resource "aws_iam_policy" "initializer_policy" {
   tags        = var.tags
 }
 
-resource "aws_iam_policy_attachment" "initializer_attach" {
-  name       = "initializer-attachment"
-  roles      = [aws_iam_role.initializer_role.name]
+resource "aws_iam_role_policy_attachment" "initializer_attach" {
+  role       = aws_iam_role.initializer_role.name
   policy_arn = aws_iam_policy.initializer_policy.arn
 }
 
@@ -209,9 +213,8 @@ resource "aws_iam_policy" "cleaner_policy" {
   tags        = var.tags
 }
 
-resource "aws_iam_policy_attachment" "cleaner_attach" {
-  name       = "cleaner-attachment"
-  roles      = [aws_iam_role.cleaner_role.name]
+resource "aws_iam_role_policy_attachment" "cleaner_attach" {
+  role       = aws_iam_role.cleaner_role.name
   policy_arn = aws_iam_policy.cleaner_policy.arn
 }
 
@@ -222,9 +225,8 @@ resource "aws_iam_policy" "optimizer_policy" {
   tags        = var.tags
 }
 
-resource "aws_iam_policy_attachment" "optimizer_attach" {
-  name       = "optimizer-attachment"
-  roles      = [aws_iam_role.optimizer_role.name]
+resource "aws_iam_role_policy_attachment" "optimizer_attach" {
+  role       = aws_iam_role.optimizer_role.name
   policy_arn = aws_iam_policy.optimizer_policy.arn
 }
 
@@ -233,9 +235,8 @@ data "aws_iam_policy" "sfn_policy" {
   name = "AWSLambdaRole"
 }
 
-resource "aws_iam_policy_attachment" "sfn_attach" {
-  name       = "sfn-attachment"
-  roles      = [aws_iam_role.sfn_role.name]
+resource "aws_iam_role_policy_attachment" "sfn_attach" {
+  role       = aws_iam_role.sfn_role.name
   policy_arn = data.aws_iam_policy.sfn_policy.arn
 }
 
