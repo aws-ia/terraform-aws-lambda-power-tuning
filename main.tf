@@ -74,12 +74,7 @@ data "aws_iam_policy_document" "initializer" {
   statement {
     sid = "1"
     actions = [
-      "lambda:GetAlias",
-      "lambda:GetFunctionConfiguration",
-      "lambda:PublishVersion",
-      "lambda:UpdateFunctionConfiguration",
-      "lambda:CreateAlias",
-      "lambda:UpdateAlias"
+      "lambda:GetFunctionConfiguration"
     ]
     resources = ["arn:aws:lambda:*:${data.aws_caller_identity.current.account_id}:function:*"]
   }
