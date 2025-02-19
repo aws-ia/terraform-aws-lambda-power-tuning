@@ -16,15 +16,20 @@ locals {
 
   role_path = var.role_path_override != "" ? var.role_path_override : "/${var.lambda_function_prefix}/"
 
+  max_total_execution_timeout    = 900
+  min_total_execution_timeout    = 10
+  actual_total_execution_timeout = max(min(local.max_total_execution_timeout, var.total_execution_timeout), local.min_total_execution_timeout)
+
   state_machine = templatefile(
     "${path.module}/state_machines/aws_lambda_power_tuning_state_machine.json",
     {
-      publisherArn   = aws_lambda_function.publisher.arn,
-      initializerArn = aws_lambda_function.initializer.arn,
-      executorArn    = aws_lambda_function.executor.arn,
-      cleanerArn     = aws_lambda_function.cleaner.arn,
-      analyzerArn    = aws_lambda_function.analyzer.arn,
-      optimizerArn   = aws_lambda_function.optimizer.arn,
+      publisherArn            = aws_lambda_function.publisher.arn,
+      initializerArn          = aws_lambda_function.initializer.arn,
+      executorArn             = aws_lambda_function.executor.arn,
+      cleanerArn              = aws_lambda_function.cleaner.arn,
+      analyzerArn             = aws_lambda_function.analyzer.arn,
+      optimizerArn            = aws_lambda_function.optimizer.arn,
+      total_execution_timeout = local.actual_total_execution_timeout,
     }
   )
   lambda_runtime = "nodejs20.x"

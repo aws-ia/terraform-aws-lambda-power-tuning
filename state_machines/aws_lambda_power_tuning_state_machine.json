@@ -7,14 +7,14 @@
       "Resource": "${initializerArn}",
       "Next": "Publisher",
       "ResultPath": "$.lambdaConfigurations",
-      "TimeoutSeconds": 300
+      "TimeoutSeconds": ${total_execution_timeout}
     },
     "Publisher": {
       "Type": "Task",
       "Resource": "${publisherArn}",
       "Next": "IsCountReached",
       "ResultPath": "$.lambdaConfigurations",
-      "TimeoutSeconds": 600,
+      "TimeoutSeconds": ${total_execution_timeout},
       "Catch": [
         {
           "ErrorEquals": ["States.ALL"],
@@ -58,7 +58,7 @@
             "Type": "Task",
             "Resource": "${executorArn}",
             "End": true,
-            "TimeoutSeconds": 30,
+            "TimeoutSeconds": ${total_execution_timeout},
             "Retry": [
               {
                 "ErrorEquals": ["States.ALL"],
@@ -74,14 +74,14 @@
       "Type": "Task",
       "Next": "Analyzer",
       "ResultPath": null,
-      "TimeoutSeconds": 30,
+      "TimeoutSeconds": ${total_execution_timeout},
       "Resource": "${cleanerArn}"
     },
     "Analyzer": {
       "Type": "Task",
       "Resource": "${analyzerArn}",
       "ResultPath": "$.analysis",
-      "TimeoutSeconds": 10,
+      "TimeoutSeconds": ${total_execution_timeout},
       "Next": "Optimizer"
     },
     "Optimizer": {
@@ -89,7 +89,7 @@
       "Resource": "${optimizerArn}",
       "ResultPath": null,
       "OutputPath": "$.analysis",
-      "TimeoutSeconds": 30,
+      "TimeoutSeconds": ${total_execution_timeout},
       "End": true
     },
     "CleanUpOnError": {
@@ -97,7 +97,7 @@
       "ResultPath": null,
       "OutputPath": null,
       "Resource": "${cleanerArn}",
-      "TimeoutSeconds": 30,
+      "TimeoutSeconds": ${total_execution_timeout},
       "End": true
     }
   }
