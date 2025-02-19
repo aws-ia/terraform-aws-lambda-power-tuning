@@ -19,11 +19,12 @@ locals {
   state_machine = templatefile(
     "${path.module}/state_machines/aws_lambda_power_tuning_state_machine.json",
     {
+      publisherArn   = aws_lambda_function.publisher.arn,
       initializerArn = aws_lambda_function.initializer.arn,
       executorArn    = aws_lambda_function.executor.arn,
       cleanerArn     = aws_lambda_function.cleaner.arn,
       analyzerArn    = aws_lambda_function.analyzer.arn,
-      optimizerArn   = aws_lambda_function.optimizer.arn
+      optimizerArn   = aws_lambda_function.optimizer.arn,
     }
   )
   lambda_runtime = "nodejs20.x"
@@ -46,6 +47,21 @@ resource "aws_sfn_state_machine" "state_machine" {
 ################################################################################
 # Roles and Policies
 ################################################################################
+
+data "aws_iam_policy_document" "publisher" {
+  statement {
+    sid = "1"
+    actions = [
+      "lambda:GetAlias",
+      "lambda:GetFunctionConfiguration",
+      "lambda:PublishVersion",
+      "lambda:UpdateFunctionConfiguration",
+      "lambda:CreateAlias",
+      "lambda:UpdateAlias"
+    ]
+    resources = ["arn:aws:lambda:*:${data.aws_caller_identity.current.account_id}:function:*"]
+  }
+}
 
 data "aws_iam_policy_document" "cleaner" {
   statement {
@@ -121,6 +137,14 @@ data "aws_iam_policy_document" "optimizer" {
   }
 }
 
+resource "aws_iam_role" "publisher_role" {
+  name                 = "${var.lambda_function_prefix}-publisher_role"
+  permissions_boundary = var.permissions_boundary
+  path                 = local.role_path
+  assume_role_policy   = data.aws_iam_policy_document.lambda.json
+  tags                 = var.tags
+}
+
 resource "aws_iam_role" "analyzer_role" {
   name                 = "${var.lambda_function_prefix}-analyzer_role"
   permissions_boundary = var.permissions_boundary
@@ -176,6 +200,7 @@ data "aws_iam_policy" "analyzer_policy" {
 
 resource "aws_iam_role_policy_attachment" "execute_attach" {
   for_each = toset([
+    aws_iam_role.publisher_role.name,
     aws_iam_role.analyzer_role.name,
     aws_iam_role.optimizer_role.name,
     aws_iam_role.executor_role.name,
@@ -184,6 +209,18 @@ resource "aws_iam_role_policy_attachment" "execute_attach" {
   ])
   role       = each.key
   policy_arn = data.aws_iam_policy.analyzer_policy.arn
+}
+
+resource "aws_iam_policy" "publisher_policy" {
+  name        = "${var.lambda_function_prefix}_publisher-policy"
+  description = "Lambda power tuning policy - Publisher - Terraform"
+  policy      = data.aws_iam_policy_document.publisher.json
+  tags        = var.tags
+}
+
+resource "aws_iam_role_policy_attachment" "polisher_attach" {
+  role       = aws_iam_role.publisher_role.name
+  policy_arn = aws_iam_policy.publisher_policy.arn
 }
 
 resource "aws_iam_policy" "executor_policy" {
@@ -248,6 +285,46 @@ resource "aws_iam_role_policy_attachment" "sfn_attach" {
 ################################################################################
 # Lambda
 ################################################################################
+
+resource "aws_lambda_function" "publisher" {
+  filename      = "src/aws-lambda-power-tuning/src/app.zip"
+  function_name = "${var.lambda_function_prefix}-publisher"
+  role          = aws_iam_role.publisher_role.arn
+  handler       = "publisher.handler"
+  layers = [
+    aws_lambda_layer_version.lambda_layer.arn
+  ]
+  memory_size = 128
+  timeout     = 30
+
+  # The filebase64sha256() function is available in Terraform 0.11.12 and later
+  # For Terraform 0.11.11 and earlier, use the base64sha256() function and the file() function:
+  # source_code_hash = "${base64sha256(file("lambda_function_payload.zip"))}"
+  source_code_hash = data.archive_file.app.output_base64sha256
+
+  runtime = local.lambda_runtime
+
+  dynamic "vpc_config" {
+    for_each = var.vpc_subnet_ids != null && var.vpc_security_group_ids != null ? [true] : []
+    content {
+      security_group_ids = var.vpc_security_group_ids
+      subnet_ids         = var.vpc_subnet_ids
+    }
+  }
+
+  environment {
+    variables = {
+      defaultPowerValues = local.default_power_values,
+      minRAM             = local.min_ram,
+      baseCosts          = local.base_costs,
+      sfCosts            = local.sf_costs,
+      visualizationURL   = local.visualization_url
+    }
+  }
+
+  depends_on = [aws_lambda_layer_version.lambda_layer]
+  tags       = var.tags
+}
 
 
 resource "aws_lambda_function" "analyzer" {
