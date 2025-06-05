@@ -20,8 +20,8 @@ locals {
   min_total_execution_timeout    = 10
   actual_total_execution_timeout = max(min(local.max_total_execution_timeout, var.total_execution_timeout), local.min_total_execution_timeout)
 
-  state_machine = templatefile(
-    "${path.module}/src/aws-lambda-power-tuning/statemachine/statemachine.asl.json",
+  state_machine = templatestring(
+    data.local_file.asl_json.content,
     {
       publisherArn          = aws_lambda_function.publisher.arn,
       initializerArn        = aws_lambda_function.initializer.arn,
@@ -32,6 +32,7 @@ locals {
       totalExecutionTimeout = local.actual_total_execution_timeout,
     }
   )
+
   lambda_runtime = "nodejs20.x"
 }
 
@@ -41,6 +42,11 @@ data "aws_caller_identity" "current" {}
 ################################################################################
 # State machine
 ################################################################################
+data "local_file" "asl_json" {
+  filename = "${path.module}/src/aws-lambda-power-tuning/statemachine/statemachine.asl.json"
+
+  depends_on = [terraform_data.build_layer]
+}
 
 resource "aws_sfn_state_machine" "state_machine" {
   name_prefix = var.lambda_function_prefix
