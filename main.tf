@@ -302,11 +302,9 @@ resource "aws_lambda_function" "publisher" {
   function_name = "${var.lambda_function_prefix}-publisher"
   role          = aws_iam_role.publisher_role.arn
   handler       = "publisher.handler"
-  layers = [
-    aws_lambda_layer_version.lambda_layer.arn
-  ]
-  memory_size = 128
-  timeout     = 30
+  layers        = [aws_lambda_layer_version.lambda_layer.arn]
+  memory_size   = 128
+  timeout       = 30
 
   # The filebase64sha256() function is available in Terraform 0.11.12 and later
   # For Terraform 0.11.11 and earlier, use the base64sha256() function and the file() function:
@@ -343,11 +341,9 @@ resource "aws_lambda_function" "analyzer" {
   function_name = "${var.lambda_function_prefix}-analyzer"
   role          = aws_iam_role.analyzer_role.arn
   handler       = "analyzer.handler"
-  layers = [
-    aws_lambda_layer_version.lambda_layer.arn
-  ]
-  memory_size = 128
-  timeout     = 30
+  layers        = [aws_lambda_layer_version.lambda_layer.arn]
+  memory_size   = 128
+  timeout       = 30
 
   # The filebase64sha256() function is available in Terraform 0.11.12 and later
   # For Terraform 0.11.11 and earlier, use the base64sha256() function and the file() function:
@@ -383,11 +379,9 @@ resource "aws_lambda_function" "cleaner" {
   function_name = "${var.lambda_function_prefix}-cleaner"
   role          = aws_iam_role.cleaner_role.arn
   handler       = "cleaner.handler"
-  layers = [
-    aws_lambda_layer_version.lambda_layer.arn
-  ]
-  memory_size = 128
-  timeout     = 40
+  layers        = [aws_lambda_layer_version.lambda_layer.arn]
+  memory_size   = 128
+  timeout       = 40
 
   # The filebase64sha256() function is available in Terraform 0.11.12 and later
   # For Terraform 0.11.11 and earlier, use the base64sha256() function and the file() function:
@@ -423,11 +417,9 @@ resource "aws_lambda_function" "executor" {
   function_name = "${var.lambda_function_prefix}-executor"
   role          = aws_iam_role.executor_role.arn
   handler       = "executor.handler"
-  layers = [
-    aws_lambda_layer_version.lambda_layer.arn
-  ]
-  memory_size = 128
-  timeout     = 30
+  layers        = [aws_lambda_layer_version.lambda_layer.arn]
+  memory_size   = 128
+  timeout       = 30
 
   # The filebase64sha256() function is available in Terraform 0.11.12 and later
   # For Terraform 0.11.11 and earlier, use the base64sha256() function and the file() function:
@@ -463,11 +455,9 @@ resource "aws_lambda_function" "initializer" {
   function_name = "${var.lambda_function_prefix}-initializer"
   role          = aws_iam_role.initializer_role.arn
   handler       = "initializer.handler"
-  layers = [
-    aws_lambda_layer_version.lambda_layer.arn
-  ]
-  memory_size = 128
-  timeout     = 30
+  layers        = [aws_lambda_layer_version.lambda_layer.arn]
+  memory_size   = 128
+  timeout       = 30
 
   # The filebase64sha256() function is available in Terraform 0.11.12 and later
   # For Terraform 0.11.11 and earlier, use the base64sha256() function and the file() function:
@@ -503,11 +493,9 @@ resource "aws_lambda_function" "optimizer" {
   function_name = "${var.lambda_function_prefix}-optimizer"
   role          = aws_iam_role.optimizer_role.arn
   handler       = "optimizer.handler"
-  layers = [
-    aws_lambda_layer_version.lambda_layer.arn
-  ]
-  memory_size = 128
-  timeout     = 30
+  layers        = [aws_lambda_layer_version.lambda_layer.arn]
+  memory_size   = 128
+  timeout       = 30
 
   # The filebase64sha256() function is available in Terraform 0.11.12 and later
   # For Terraform 0.11.11 and earlier, use the base64sha256() function and the file() function:
@@ -581,8 +569,6 @@ data "archive_file" "app" {
   output_path = "src/aws-lambda-power-tuning/src/app.zip"
   source_dir  = "src/aws-lambda-power-tuning/lambda/"
 
-  depends_on = [
-    terraform_data.build_layer
-  ]
+  depends_on = [terraform_data.build_layer]
 }
 
