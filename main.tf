@@ -1,22 +1,38 @@
 locals {
   default_power_values = "[128,256,512,1024,1536,3008]"
   min_ram              = 128
-  base_costs           = jsonencode({ "x86_64" : { "ap-east-1" : 2.9e-9, "af-south-1" : 2.8e-9, "me-south-1" : 2.6e-9, "eu-south-1" : 2.4e-9, "ap-northeast-3" : 2.7e-9, "default" : 2.1e-9 }, "arm64" : { "default" : 1.7e-9 } })
-  sf_costs             = jsonencode({ "default" : 0.000025, "us-gov-west-1" : 0.00003, "ap-northeast-2" : 0.0000271, "eu-south-1" : 0.00002625, "af-south-1" : 0.00002975, "us-west-1" : 0.0000279, "eu-west-3" : 0.0000297, "ap-east-1" : 0.0000275, "me-south-1" : 0.0000275, "ap-south-1" : 0.0000285, "us-gov-east-1" : 0.00003, "sa-east-1" : 0.0000375 })
-  visualization_url    = "https://lambda-power-tuning.show/"
+  base_costs = jsonencode({
+    "x86_64" : {
+      "ap-east-1" : 2.9e-9, "af-south-1" : 2.8e-9, "me-south-1" : 2.6e-9, "eu-south-1" : 2.4e-9,
+      "ap-northeast-3" : 2.7e-9, "default" : 2.1e-9
+    }, "arm64" : { "default" : 1.7e-9 }
+  })
+  sf_costs = jsonencode({
+    "default" : 0.000025, "us-gov-west-1" : 0.00003, "ap-northeast-2" : 0.0000271, "eu-south-1" : 0.00002625,
+    "af-south-1" : 0.00002975, "us-west-1" : 0.0000279, "eu-west-3" : 0.0000297, "ap-east-1" : 0.0000275,
+    "me-south-1" : 0.0000275, "ap-south-1" : 0.0000285, "us-gov-east-1" : 0.00003, "sa-east-1" : 0.0000375
+  })
+  visualization_url = "https://lambda-power-tuning.show/"
 
   role_path = var.role_path_override != "" ? var.role_path_override : "/${var.lambda_function_prefix}/"
 
-  state_machine = templatefile(
-    "${path.module}/state_machines/aws_lambda_power_tuning_state_machine.json",
+  max_total_execution_timeout    = 900
+  min_total_execution_timeout    = 10
+  actual_total_execution_timeout = max(min(local.max_total_execution_timeout, var.total_execution_timeout), local.min_total_execution_timeout)
+
+  state_machine = templatestring(
+    data.local_file.asl_json.content,
     {
-      initializerArn = aws_lambda_function.initializer.arn,
-      executorArn    = aws_lambda_function.executor.arn,
-      cleanerArn     = aws_lambda_function.cleaner.arn,
-      analyzerArn    = aws_lambda_function.analyzer.arn,
-      optimizerArn   = aws_lambda_function.optimizer.arn
+      publisherArn          = aws_lambda_function.publisher.arn,
+      initializerArn        = aws_lambda_function.initializer.arn,
+      executorArn           = aws_lambda_function.executor.arn,
+      cleanerArn            = aws_lambda_function.cleaner.arn,
+      analyzerArn           = aws_lambda_function.analyzer.arn,
+      optimizerArn          = aws_lambda_function.optimizer.arn,
+      totalExecutionTimeout = local.actual_total_execution_timeout,
     }
   )
+
   lambda_runtime = "nodejs20.x"
 }
 
@@ -26,6 +42,11 @@ data "aws_caller_identity" "current" {}
 ################################################################################
 # State machine
 ################################################################################
+data "local_file" "asl_json" {
+  filename = "${path.module}/src/aws-lambda-power-tuning/statemachine/statemachine.asl.json"
+
+  depends_on = [terraform_data.build_layer]
+}
 
 resource "aws_sfn_state_machine" "state_machine" {
   name_prefix = var.lambda_function_prefix
@@ -37,6 +58,21 @@ resource "aws_sfn_state_machine" "state_machine" {
 ################################################################################
 # Roles and Policies
 ################################################################################
+
+data "aws_iam_policy_document" "publisher" {
+  statement {
+    sid = "1"
+    actions = [
+      "lambda:GetAlias",
+      "lambda:GetFunctionConfiguration",
+      "lambda:PublishVersion",
+      "lambda:UpdateFunctionConfiguration",
+      "lambda:CreateAlias",
+      "lambda:UpdateAlias"
+    ]
+    resources = ["arn:aws:lambda:*:${data.aws_caller_identity.current.account_id}:function:*"]
+  }
+}
 
 data "aws_iam_policy_document" "cleaner" {
   statement {
@@ -65,12 +101,7 @@ data "aws_iam_policy_document" "initializer" {
   statement {
     sid = "1"
     actions = [
-      "lambda:GetAlias",
-      "lambda:GetFunctionConfiguration",
-      "lambda:PublishVersion",
-      "lambda:UpdateFunctionConfiguration",
-      "lambda:CreateAlias",
-      "lambda:UpdateAlias"
+      "lambda:GetFunctionConfiguration"
     ]
     resources = ["arn:aws:lambda:*:${data.aws_caller_identity.current.account_id}:function:*"]
   }
@@ -115,6 +146,14 @@ data "aws_iam_policy_document" "optimizer" {
     ]
     resources = ["arn:aws:lambda:*:${data.aws_caller_identity.current.account_id}:function:*"]
   }
+}
+
+resource "aws_iam_role" "publisher_role" {
+  name                 = "${var.lambda_function_prefix}-publisher_role"
+  permissions_boundary = var.permissions_boundary
+  path                 = local.role_path
+  assume_role_policy   = data.aws_iam_policy_document.lambda.json
+  tags                 = var.tags
 }
 
 resource "aws_iam_role" "analyzer_role" {
@@ -170,10 +209,29 @@ data "aws_iam_policy" "analyzer_policy" {
   name = "AWSLambdaExecute"
 }
 
-resource "aws_iam_policy_attachment" "execute_attach" {
-  name       = "execute-attachment"
-  roles      = [aws_iam_role.analyzer_role.name, aws_iam_role.optimizer_role.name, aws_iam_role.executor_role.name, aws_iam_role.cleaner_role.name, aws_iam_role.initializer_role.name]
+resource "aws_iam_role_policy_attachment" "execute_attach" {
+  for_each = toset([
+    aws_iam_role.publisher_role.name,
+    aws_iam_role.analyzer_role.name,
+    aws_iam_role.optimizer_role.name,
+    aws_iam_role.executor_role.name,
+    aws_iam_role.cleaner_role.name,
+    aws_iam_role.initializer_role.name
+  ])
+  role       = each.key
   policy_arn = data.aws_iam_policy.analyzer_policy.arn
+}
+
+resource "aws_iam_policy" "publisher_policy" {
+  name        = "${var.lambda_function_prefix}_publisher-policy"
+  description = "Lambda power tuning policy - Publisher - Terraform"
+  policy      = data.aws_iam_policy_document.publisher.json
+  tags        = var.tags
+}
+
+resource "aws_iam_role_policy_attachment" "polisher_attach" {
+  role       = aws_iam_role.publisher_role.name
+  policy_arn = aws_iam_policy.publisher_policy.arn
 }
 
 resource "aws_iam_policy" "executor_policy" {
@@ -183,9 +241,8 @@ resource "aws_iam_policy" "executor_policy" {
   tags        = var.tags
 }
 
-resource "aws_iam_policy_attachment" "executor_attach" {
-  name       = "executor-attachment"
-  roles      = [aws_iam_role.executor_role.name]
+resource "aws_iam_role_policy_attachment" "executor_attach" {
+  role       = aws_iam_role.executor_role.name
   policy_arn = aws_iam_policy.executor_policy.arn
 }
 
@@ -196,9 +253,8 @@ resource "aws_iam_policy" "initializer_policy" {
   tags        = var.tags
 }
 
-resource "aws_iam_policy_attachment" "initializer_attach" {
-  name       = "initializer-attachment"
-  roles      = [aws_iam_role.initializer_role.name]
+resource "aws_iam_role_policy_attachment" "initializer_attach" {
+  role       = aws_iam_role.initializer_role.name
   policy_arn = aws_iam_policy.initializer_policy.arn
 }
 
@@ -209,9 +265,8 @@ resource "aws_iam_policy" "cleaner_policy" {
   tags        = var.tags
 }
 
-resource "aws_iam_policy_attachment" "cleaner_attach" {
-  name       = "cleaner-attachment"
-  roles      = [aws_iam_role.cleaner_role.name]
+resource "aws_iam_role_policy_attachment" "cleaner_attach" {
+  role       = aws_iam_role.cleaner_role.name
   policy_arn = aws_iam_policy.cleaner_policy.arn
 }
 
@@ -222,9 +277,8 @@ resource "aws_iam_policy" "optimizer_policy" {
   tags        = var.tags
 }
 
-resource "aws_iam_policy_attachment" "optimizer_attach" {
-  name       = "optimizer-attachment"
-  roles      = [aws_iam_role.optimizer_role.name]
+resource "aws_iam_role_policy_attachment" "optimizer_attach" {
+  role       = aws_iam_role.optimizer_role.name
   policy_arn = aws_iam_policy.optimizer_policy.arn
 }
 
@@ -233,9 +287,8 @@ data "aws_iam_policy" "sfn_policy" {
   name = "AWSLambdaRole"
 }
 
-resource "aws_iam_policy_attachment" "sfn_attach" {
-  name       = "sfn-attachment"
-  roles      = [aws_iam_role.sfn_role.name]
+resource "aws_iam_role_policy_attachment" "sfn_attach" {
+  role       = aws_iam_role.sfn_role.name
   policy_arn = data.aws_iam_policy.sfn_policy.arn
 }
 
@@ -243,6 +296,44 @@ resource "aws_iam_policy_attachment" "sfn_attach" {
 ################################################################################
 # Lambda
 ################################################################################
+
+resource "aws_lambda_function" "publisher" {
+  filename      = "src/aws-lambda-power-tuning/src/app.zip"
+  function_name = "${var.lambda_function_prefix}-publisher"
+  role          = aws_iam_role.publisher_role.arn
+  handler       = "publisher.handler"
+  layers        = [aws_lambda_layer_version.lambda_layer.arn]
+  memory_size   = 128
+  timeout       = 30
+
+  # The filebase64sha256() function is available in Terraform 0.11.12 and later
+  # For Terraform 0.11.11 and earlier, use the base64sha256() function and the file() function:
+  # source_code_hash = "${base64sha256(file("lambda_function_payload.zip"))}"
+  source_code_hash = data.archive_file.app.output_base64sha256
+
+  runtime = local.lambda_runtime
+
+  dynamic "vpc_config" {
+    for_each = var.vpc_subnet_ids != null && var.vpc_security_group_ids != null ? [true] : []
+    content {
+      security_group_ids = var.vpc_security_group_ids
+      subnet_ids         = var.vpc_subnet_ids
+    }
+  }
+
+  environment {
+    variables = {
+      defaultPowerValues = local.default_power_values,
+      minRAM             = local.min_ram,
+      baseCosts          = local.base_costs,
+      sfCosts            = local.sf_costs,
+      visualizationURL   = local.visualization_url
+    }
+  }
+
+  depends_on = [aws_lambda_layer_version.lambda_layer]
+  tags       = var.tags
+}
 
 
 resource "aws_lambda_function" "analyzer" {
@@ -443,7 +534,9 @@ resource "aws_lambda_layer_version" "lambda_layer" {
   compatible_architectures = ["x86_64"]
   compatible_runtimes      = [local.lambda_runtime]
 
-  depends_on = [data.archive_file.layer]
+  depends_on = [
+    data.archive_file.layer
+  ]
 
 }
 
@@ -476,8 +569,6 @@ data "archive_file" "app" {
   output_path = "src/aws-lambda-power-tuning/src/app.zip"
   source_dir  = "src/aws-lambda-power-tuning/lambda/"
 
-  depends_on = [
-    terraform_data.build_layer
-  ]
+  depends_on = [terraform_data.build_layer]
 }
 

@@ -19,6 +19,6 @@ output "initializer_function" {
 }
 
 output "optimizer_function" {
-  description = "optimizer lambda function ARN"
+  description = "Optimizer lambda function ARN"
   value       = try(aws_lambda_function.optimizer.arn, null)
 }
