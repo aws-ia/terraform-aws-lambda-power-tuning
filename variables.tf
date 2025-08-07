@@ -37,3 +37,9 @@ variable "tags" {
   type        = map(string)
   default     = { "app" : "lambda_power_tuning" }
 }
+
+variable "total_execution_timeout" {
+  description = "Maximum invocation timeout (in seconds) for the Executor step, after which you get a States.Timeout error"
+  type        = number
+  default     = 300
+}
